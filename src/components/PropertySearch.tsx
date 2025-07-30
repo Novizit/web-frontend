@@ -75,7 +75,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
     // Only trigger for location buttons and BHK filters
     // Search will be triggered by form submission
     debouncedUpdateFilters(filters);
-  }, [filters.selectedLocations.length, filters.selectedBhkTypes.length]);
+  }, [filters.selectedLocations.length, filters.selectedBhkTypes.length, debouncedUpdateFilters, filters]);
 
   // Handle search submission separately
   const [searchSubmitted, setSearchSubmitted] = useState(false);
@@ -85,7 +85,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
       debouncedUpdateFilters(filters);
       setSearchSubmitted(false);
     }
-  }, [searchSubmitted, filters.searchLocation]);
+  }, [searchSubmitted, filters.searchLocation, debouncedUpdateFilters, filters]);
 
   // Validate search input
   const validateSearchInput = (input: string): boolean => {
@@ -200,10 +200,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
     }
   };
 
-  // Check if any filters are active
-  const hasActiveFilters = filters.searchLocation || 
-    filters.selectedLocations.length > 0 || 
-    filters.selectedBhkTypes.length > 0;
+
 
   return (
     <div className="bg-[#F7F7EF] py-10 mt-32 mx-10 rounded-xl">
@@ -231,7 +228,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  handleSearchSubmit(e as any);
+                  handleSearchSubmit(e as React.FormEvent);
                 }
               }}
               disabled={isLoading}

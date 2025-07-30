@@ -25,7 +25,6 @@ interface Property {
 }
 
 export default function PropertyDetails({ property }: { property: Property }) {
-  const [currentImageIndex] = useState(0);
 
   // Prefer Azure imageUrls, then slides, then fallback
   const images: string[] =
