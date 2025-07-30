@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import PropertySearch from "../components/PropertySearch";
-import PropertyCard from "../components/PropertyCard";
 import { getProperties } from "../services/propertyService";
 import ClientPropertyList from "../components/ClientPropertyList";
 
@@ -54,7 +52,7 @@ export default async function Home() {
             <span className="text-8xl font-bold leading-[76px] tracking-widest">Free</span>
           </div>
           <div className="text-[#696c78] text-xl leading-relaxed ml-10">
-            I don't even have the payment page
+            I don&apos;t even have the payment page
           </div>
 
           {/* Call-to-action Button */}

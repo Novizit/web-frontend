@@ -13,7 +13,24 @@ const getBaseUrl = () => {
   return API_BASE_URL;
 };
 
-export async function createProperty(property: any) {
+interface Property {
+  propertyName: string;
+  rent: number;
+  securityDeposit: number;
+  maintenance: number;
+  location: string;
+  availableFrom: string;
+  propertyType: string;
+  bhkType: string;
+  furnishing: string;
+  preferredTenant: string;
+  ownerType: string;
+  ownerName: string;
+  contactNumber: string;
+  imageUrls?: string[];
+}
+
+export async function createProperty(property: Property) {
   const response = await fetch(`${getBaseUrl()}/properties`, {
     method: 'POST',
     headers: {
@@ -113,7 +130,7 @@ export async function getPropertyById(id: number) {
   return response.json();
 } 
 
-export async function getSimilarProperties(propertyId: number, maxResults: number = 6): Promise<{ properties: any[], isFallback: boolean }> {
+export async function getSimilarProperties(propertyId: number, maxResults: number = 6): Promise<{ properties: unknown[], isFallback: boolean }> {
   const url = `${getBaseUrl()}/properties/similar-properties/${propertyId}?maxResults=${maxResults}`;
   const response = await fetch(url, {
     method: 'GET',

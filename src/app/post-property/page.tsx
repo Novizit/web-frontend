@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { createProperty } from '../../services/propertyService';
 
 // Helper to get SAS URL from backend
@@ -142,7 +143,7 @@ const PostProperty = () => {
         };
 
         const missingFields = Object.entries(requiredFields)
-            .filter(([key, value]) => !value || value.trim() === '')
+            .filter(([, value]) => !value || value.trim() === '')
             .map(([key]) => key);
 
         if (missingFields.length > 0) {
@@ -257,9 +258,11 @@ const PostProperty = () => {
                         <div className="flex flex-wrap gap-4 mt-4">
                             {imagePreviews.map((src, idx) => (
                                 <div key={idx} className="relative">
-                                    <img 
+                                    <Image 
                                         src={src} 
                                         alt="Preview" 
+                                        width={96}
+                                        height={96}
                                         className="w-24 h-24 object-cover rounded-lg border" 
                                     />
                                     <button

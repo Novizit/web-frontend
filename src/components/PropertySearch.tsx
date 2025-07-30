@@ -200,15 +200,6 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
     }
   };
 
-  // Clear all filters
-  const clearAllFilters = () => {
-    setFilters({
-      searchLocation: '',
-      selectedLocations: [],
-      selectedBhkTypes: []
-    });
-  };
-
   // Check if any filters are active
   const hasActiveFilters = filters.searchLocation || 
     filters.selectedLocations.length > 0 || 

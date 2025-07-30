@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -34,9 +35,11 @@ const PropertyImageCarousel: React.FC<PropertyImageCarouselProps> = ({ images })
         >
           {images.map((img, idx) => (
             <SwiperSlide key={idx}>
-              <img
+              <Image
                 src={img}
                 alt={`Property image ${idx + 1}`}
+                width={700}
+                height={394}
                 className="object-cover w-full h-full"
               />
             </SwiperSlide>

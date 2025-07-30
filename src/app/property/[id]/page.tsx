@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getPropertyById, getSimilarProperties } from '../../../services/propertyService';
+import { getPropertyById } from '../../../services/propertyService';
 import PropertyDetails from '../../../components/PropertyDetails';
 import ContactOwner from '../../../components/ContactOwner';
 import ClientSimilarProperties from '../../../components/ClientSimilarProperties';

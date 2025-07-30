@@ -1,11 +1,31 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 import PropertyImageCarousel from "./PropertyImageCarousel";
 
-export default function PropertyDetails({ property }: { property: any }) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+interface Property {
+  id: number;
+  propertyName: string;
+  rent: number;
+  securityDeposit?: number;
+  maintenance?: number;
+  location: string;
+  propertyType: string;
+  formattedBhkType?: string;
+  bhkType?: string;
+  formattedFurnishing?: string;
+  furnishing?: string;
+  preferredTenant?: string;
+  tenantType?: string;
+  availableFrom: string;
+  imageUrls?: string[];
+  slides?: string[];
+  title?: string;
+  price?: number;
+}
+
+export default function PropertyDetails({ property }: { property: Property }) {
+  const [currentImageIndex] = useState(0);
 
   // Prefer Azure imageUrls, then slides, then fallback
   const images: string[] =
@@ -14,22 +34,6 @@ export default function PropertyDetails({ property }: { property: any }) {
       : Array.isArray(property.slides) && property.slides.length > 0
       ? property.slides
       : ["/property_Img.svg"];
-
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === (images.length - 1) ? 0 : prev + 1
-    );
-  };
-
-  const prevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? (images.length - 1) : prev - 1
-    );
-  };
-
-  const goToImage = (index: number) => {
-    setCurrentImageIndex(index);
-  };
 
   return (
     <div className="mt-10">
