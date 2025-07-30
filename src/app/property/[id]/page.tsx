@@ -5,9 +5,9 @@ import ContactOwner from '../../../components/ContactOwner';
 import ClientSimilarProperties from '../../../components/ClientSimilarProperties';
 
 interface PropertyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 // Server-side data fetching for SEO and initial load
@@ -27,7 +27,8 @@ async function getPropertyData(id: string) {
 }
 
 export default async function PropertyPage({ params }: PropertyPageProps) {
-  const property = await getPropertyData(params.id);
+  const resolvedParams = await params;
+  const property = await getPropertyData(resolvedParams.id);
   
   if (!property) {
     notFound();
@@ -65,7 +66,8 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: PropertyPageProps) {
-  const property = await getPropertyData(params.id);
+  const resolvedParams = await params;
+  const property = await getPropertyData(resolvedParams.id);
   
   if (!property) {
     return {
