@@ -39,7 +39,7 @@ export default function ClientSimilarProperties({
         setError(null);
         
         const result = await getSimilarProperties(propertyId, 6);
-        setSimilarProperties(result.properties || []);
+        setSimilarProperties((result.properties as Property[]) || []);
         setIsFallback(result.isFallback || false);
       } catch (err) {
         console.error('Error fetching similar properties:', err);
