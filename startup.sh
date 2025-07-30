@@ -3,6 +3,9 @@
 # Go to app directory (this is where Azure deploys your code).
 cd /home/site/wwwroot
 
+# Make sure the script is executable
+chmod +x startup.sh
+
 # Install dependencies
 echo "Installing Node.js dependencies..."
 npm install --omit=dev
