@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 # Configuration
-RESOURCE_GROUP="novizit-frontend-rg"
+RESOURCE_GROUP="Data_base"
 PLAN_NAME="novizit-frontend-plan"
 APP_NAME="novizit-frontend-web"
 LOCATION="Central India"
