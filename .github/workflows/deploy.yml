@@ -1,0 +1,212 @@
+# GitHub Actions Workflow for Frontend Deployment
+# This workflow automatically builds and deploys the Next.js frontend to Azure App Service
+
+name: Deploy Frontend to Azure
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'frontend/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+env:
+  AZURE_WEBAPP_NAME: real-estate-frontend
+  AZURE_WEBAPP_NAME_STAGING: real-estate-frontend-staging
+  RESOURCE_GROUP: real-estate-platform-rg
+  NODE_VERSION: '18.17.0'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Run linting
+      working-directory: ./frontend
+      run: npm run lint
+
+    - name: Type check
+      working-directory: ./frontend
+      run: npm run type-check
+
+    - name: Build application
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Create deployment package
+      working-directory: ./frontend
+      run: |
+        zip -r deployment.zip . \
+          -x "node_modules/*" \
+          ".git/*" \
+          "*.log" \
+          "coverage/*" \
+          ".env*" \
+          ".next/*" \
+          "deployment.zip"
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: frontend/deployment.zip
+
+  deploy-production:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+
+    - name: Deploy to Azure App Service
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME }}
+        package: deployment.zip
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+
+    - name: Configure environment variables
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az webapp config appsettings set \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --settings \
+              NODE_ENV="production" \
+              NEXT_TELEMETRY_DISABLED="1" \
+              WEBSITE_NODE_DEFAULT_VERSION="${{ env.NODE_VERSION }}" \
+              WEBSITE_RUN_FROM_PACKAGE="1" \
+            --output none
+          
+          # Get backend URL and set API URL
+          BACKEND_URL=$(az webapp show \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name "real-estate-backend" \
+            --query "defaultHostName" \
+            --output tsv 2>/dev/null || echo "real-estate-backend.azurewebsites.net")
+          
+          az webapp config appsettings set \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_WEBAPP_NAME }} \
+            --settings \
+              NEXT_PUBLIC_API_URL="https://$BACKEND_URL/api" \
+            --output none
+
+    - name: Health check
+      run: |
+        sleep 30
+        APP_URL=$(az webapp show \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name ${{ env.AZURE_WEBAPP_NAME }} \
+          --query "defaultHostName" \
+          --output tsv)
+        
+        if curl -f "https://$APP_URL" > /dev/null 2>&1; then
+          echo "✅ Health check passed!"
+        else
+          echo "⚠️  Health check failed. The app might still be starting up."
+          exit 1
+        fi
+
+  deploy-staging:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    environment: staging
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+
+    - name: Deploy to Azure App Service (Staging)
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ env.AZURE_WEBAPP_NAME_STAGING }}
+        package: deployment.zip
+        publish-profile: ${{ secrets.AZURE_WEBAPP_STAGING_PUBLISH_PROFILE }}
+
+    - name: Configure staging environment variables
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az webapp config appsettings set \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_WEBAPP_NAME_STAGING }} \
+            --settings \
+              NODE_ENV="staging" \
+              NEXT_TELEMETRY_DISABLED="1" \
+              WEBSITE_NODE_DEFAULT_VERSION="${{ env.NODE_VERSION }}" \
+              WEBSITE_RUN_FROM_PACKAGE="1" \
+            --output none
+          
+          # Get backend URL and set API URL for staging
+          BACKEND_URL=$(az webapp show \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name "real-estate-backend-staging" \
+            --query "defaultHostName" \
+            --output tsv 2>/dev/null || echo "real-estate-backend.azurewebsites.net")
+          
+          az webapp config appsettings set \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.AZURE_WEBAPP_NAME_STAGING }} \
+            --settings \
+              NEXT_PUBLIC_API_URL="https://$BACKEND_URL/api" \
+            --output none
+
+  test:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-build
+
+    - name: Test deployment package
+      run: |
+        unzip -l deployment.zip | head -20
+        echo "✅ Deployment package created successfully"
+        
+        # Check if essential files are present
+        if unzip -l deployment.zip | grep -q "package.json"; then
+          echo "✅ package.json found"
+        else
+          echo "❌ package.json not found"
+          exit 1
+        fi
+        
+        if unzip -l deployment.zip | grep -q ".next"; then
+          echo "✅ .next directory found"
+        else
+          echo "❌ .next directory not found"
+          exit 1 
