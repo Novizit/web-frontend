@@ -4,9 +4,9 @@
   "private": true,
   "description": "Real Estate Platform Frontend",
   "scripts": {
-    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "dev": "next dev",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
