@@ -359,6 +359,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
 };
 
 // Debounce utility function with cancel method
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
