@@ -33,6 +33,15 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
+
+  // Production optimizations
+  poweredByHeader: false,
+  compress: true,
+  
+  // Ensure proper port handling
+  experimental: {
+    serverComponentsExternalPackages: [],
+  },
 };
 
 module.exports = nextConfig; 

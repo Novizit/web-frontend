@@ -6,9 +6,9 @@ pool:
 
 variables:
   nodeVersion: '18.x'
-  resourceGroupName: 'Data_base'
-  appServiceName: 'real-estate-frontend'
-  location: 'East US'
+  resourceGroupName: 'novizit-rg'
+  appServiceName: 'novizit-frontend-web-g6dncbcjczeudgft'
+  location: 'Central India'
 
 stages:
 - stage: Build
@@ -50,7 +50,6 @@ stages:
           **/test/**
           **/*.test.*
           **/*.spec.*
-          **/.next/**
         displayName: 'Create deployment package'
 
     - task: PublishBuildArtifacts@1
