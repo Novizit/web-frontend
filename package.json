@@ -10,8 +10,7 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
-    "analyze": "ANALYZE=true next build",
-    "postinstall": "next telemetry disable"
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "next": "15.3.4",
