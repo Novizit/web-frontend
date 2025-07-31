@@ -6,7 +6,8 @@ import { createProperty } from '../../services/propertyService';
 
 // Helper to get SAS URL from backend
 async function getAzureSasUrl(filename: string, contentType: string): Promise<{ uploadUrl: string; blobUrl: string; expiresOn: string }> {
-  const res = await fetch('http://localhost:3001/api/azure/sas-url', {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  const res = await fetch(`${API_BASE_URL}/azure/sas-url`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ filename, contentType }),
