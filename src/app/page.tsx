@@ -28,6 +28,7 @@ async function getInitialProperties(): Promise<Property[]> {
     return data.results || [];
   } catch (error) {
     console.error('Error fetching initial properties:', error);
+    // Return empty array if API is not available (for deployment)
     return [];
   }
 }

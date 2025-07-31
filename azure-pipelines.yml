@@ -50,7 +50,6 @@ stages:
           **/test/**
           **/*.test.*
           **/*.spec.*
-          **/src/**
           **/.next/**
         displayName: 'Create deployment package'
 

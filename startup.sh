@@ -5,7 +5,11 @@ cd /home/site/wwwroot
 
 # Install dependencies
 echo "Installing Node.js dependencies..."
-npm install --omit=dev
+npm install
+
+# Build the application
+echo "Building the application..."
+npm run build
 
 # Start the Next.js app
 echo "Starting Next.js app..."
