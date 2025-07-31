@@ -5,9 +5,9 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  nodeVersion: '18.x'
-  resourceGroupName: 'novizit-rg'
-  appServiceName: 'novizit-frontend-web-g6dncbcjczeudgft'
+  nodeVersion: '22.x'
+  resourceGroupName: 'Data_base'
+  appServiceName: 'novizit-frontend-web'
   location: 'Central India'
 
 stages:
@@ -78,7 +78,7 @@ stages:
               resourceGroupName: $(resourceGroupName)
               package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
               appType: 'webAppLinux'
-              runtimeStack: 'NODE|18-lts'
+              runtimeStack: 'NODE|22-lts'
               startUpCommand: 'chmod +x startup.sh && ./startup.sh'
               
           - script: |
