@@ -1,271 +1,271 @@
-# Frontend Azure Deployment Guide
+# Azure Frontend Deployment Guide
 
-This guide provides step-by-step instructions for deploying the Next.js frontend to Azure App Service.
+This guide provides step-by-step instructions for deploying the Real Estate Platform frontend to Azure App Service.
 
-## 🏗️ Architecture
+## Prerequisites
 
-```
-┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │◄──►│   Backend       │
-│   (Next.js)     │    │   (Node.js)     │
-│   Azure App     │    │   Azure App     │
-│   Service       │    │   Service       │
-└─────────────────┘    └─────────────────┘
-```
+- Azure CLI installed and configured
+- Node.js 18+ installed locally
+- Git repository with frontend code
+- Azure subscription with appropriate permissions
 
-## 📋 Prerequisites
+## Quick Deployment
 
-1. **Azure Account** with active subscription
-2. **Azure CLI** installed and configured
-3. **Node.js 18+** for local development
-4. **Git** for version control
+### Option 1: Using Azure CLI Script (Recommended)
 
-## 🚀 Quick Deployment
-
-### Option 1: Automated Scripts
-
-#### For Linux/macOS:
 ```bash
-cd frontend
+# Make the script executable
 chmod +x azure-deploy.sh
+
+# Run the deployment script
 ./azure-deploy.sh
 ```
 
-#### For Windows:
+### Option 2: Using PowerShell Script
+
 ```powershell
-cd frontend
+# Run the PowerShell deployment script
 .\azure-deploy.ps1
 ```
 
-### Option 2: Manual Deployment
+### Option 3: Manual Deployment
 
-#### Step 1: Create Azure Resources
+Follow the steps below for manual deployment.
+
+## Manual Deployment Steps
+
+### 1. Azure CLI Setup
+
+```bash
+# Install Azure CLI (if not already installed)
+# Windows: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-windows
+# macOS: brew install azure-cli
+# Linux: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+
+# Login to Azure
+az login
+
+# Set your subscription (if you have multiple)
+az account set --subscription "Your-Subscription-Name"
+```
+
+### 2. Create Azure Resources
 
 ```bash
 # Create resource group
-az group create --name real-estate-platform-rg --location "East US"
+az group create --name "Data_base" --location "East US"
 
-# Create App Service Plan
+# Create App Service plan
 az appservice plan create \
-  --name real-estate-frontend-plan \
-  --resource-group real-estate-platform-rg \
-  --sku B1 \
-  --is-linux
+    --name "real-estate-frontend-plan" \
+    --resource-group "Data_base" \
+    --sku "B1" \
+    --is-linux
 
 # Create App Service
 az webapp create \
-  --name real-estate-frontend \
-  --resource-group real-estate-platform-rg \
-  --plan real-estate-frontend-plan \
-  --runtime "NODE|18-lts"
+    --name "real-estate-frontend" \
+    --resource-group "Data_base" \
+    --plan "real-estate-frontend-plan" \
+    --runtime "NODE|18-lts" \
+    --deployment-local-git
 ```
 
-#### Step 2: Configure Environment Variables
+### 3. Configure App Service
 
 ```bash
-az webapp config appsettings set \
-  --resource-group real-estate-platform-rg \
-  --name real-estate-frontend \
-  --settings \
-    NODE_ENV="production" \
-    NEXT_TELEMETRY_DISABLED="1" \
-    WEBSITE_NODE_DEFAULT_VERSION="18.17.0" \
-    WEBSITE_RUN_FROM_PACKAGE="1" \
-    NEXT_PUBLIC_API_URL="https://real-estate-backend.azurewebsites.net/api"
+# Set Node.js version
+az webapp config set \
+    --resource-group "Data_base" \
+    --name "real-estate-frontend" \
+    --linux-fx-version "NODE|18-lts"
+
+# Set startup command
+az webapp config set \
+    --resource-group "Data_base" \
+    --name "real-estate-frontend" \
+    --startup-file "npm start"
+
+# Enable logging
+az webapp log config \
+    --resource-group "Data_base" \
+    --name "real-estate-frontend" \
+    --web-server-logging filesystem
 ```
 
-#### Step 3: Deploy Application
+### 4. Build and Deploy
 
 ```bash
-cd frontend
-
 # Install dependencies
-npm ci --only=production
+npm install
 
-# Build application
+# Build the application
 npm run build
 
 # Create deployment package
-zip -r deployment.zip . \
-  -x "node_modules/*" \
-  ".git/*" \
-  "*.log" \
-  "coverage/*" \
-  ".env*" \
-  ".next/*" \
-  "deployment.zip"
+zip -r deployment.zip . -x "node_modules/*" ".git/*" "*.log" "coverage/*" ".env*" "src/*" ".next/*"
 
 # Deploy to Azure
 az webapp deployment source config-zip \
-  --resource-group real-estate-platform-rg \
-  --name real-estate-frontend \
-  --src deployment.zip
+    --resource-group "Data_base" \
+    --name "real-estate-frontend" \
+    --src deployment.zip
 
 # Clean up
 rm deployment.zip
 ```
 
-## 🔧 CI/CD Pipeline Setup
+### 5. Configure Environment Variables
 
-### Azure DevOps Pipeline
-
-1. **Create Azure DevOps Project**
-2. **Import Repository**
-3. **Create Pipeline** using `azure-pipelines.yml`
-4. **Configure Service Connections**
-5. **Set Environment Variables**
-
-### GitHub Actions
-
-1. **Add Repository Secrets**:
-   - `AZURE_WEBAPP_PUBLISH_PROFILE`
-   - `AZURE_WEBAPP_STAGING_PUBLISH_PROFILE`
-
-2. **Enable GitHub Actions** using `.github/workflows/deploy.yml`
-
-## 📊 Monitoring and Health Checks
-
-### Application Logs
 ```bash
-# View real-time logs
-az webapp log tail --resource-group real-estate-platform-rg --name real-estate-frontend
-
-# Download logs
-az webapp log download --resource-group real-estate-platform-rg --name real-estate-frontend
+# Set environment variables
+az webapp config appsettings set \
+    --resource-group "Data_base" \
+    --name "real-estate-frontend" \
+    --settings \
+        NODE_ENV="production" \
+        NEXT_TELEMETRY_DISABLED="1" \
+        NEXT_PUBLIC_API_URL="https://your-backend-app.azurewebsites.net/api"
 ```
 
-### Health Check
+## CI/CD Pipeline Deployment
+
+### Using Azure DevOps
+
+1. Create a new pipeline in Azure DevOps
+2. Use the `azure-pipelines.yml` file as the pipeline definition
+3. Configure the Azure subscription connection
+4. Set up branch policies for automatic deployment
+
+### Pipeline Features
+
+- **Build Stage**: Installs dependencies, builds the application, runs linting
+- **Deploy Stage**: Deploys to Azure App Service with proper configuration
+- **Health Checks**: Verifies deployment success
+- **Environment Variables**: Automatically configures production settings
+
+## Configuration Files
+
+### next.config.js
+- Optimized for production deployment
+- Security headers configuration
+- Image optimization settings
+
+### Dockerfile
+- Multi-stage build for optimized image size
+- Security best practices (non-root user)
+- Health check configuration
+
+### startup.sh
+- Handles Azure App Service startup
+- Installs production dependencies
+- Starts the Next.js application
+
+## Environment Variables
+
+### Required Variables
+
 ```bash
-# Get app URL
-APP_URL=$(az webapp show \
-  --resource-group real-estate-platform-rg \
-  --name real-estate-frontend \
-  --query "defaultHostName" \
-  --output tsv)
-
-# Test health
-curl -f "https://$APP_URL"
-```
-
-## 🔒 Security Configuration
-
-### Environment Variables
-```bash
-# Production settings
 NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
-WEBSITE_NODE_DEFAULT_VERSION=18.17.0
-WEBSITE_RUN_FROM_PACKAGE=1
 NEXT_PUBLIC_API_URL=https://your-backend-app.azurewebsites.net/api
 ```
 
-### Security Headers
-The application includes security headers in `next.config.ts`:
-- X-Frame-Options: DENY
-- X-Content-Type-Options: nosniff
-- Referrer-Policy: origin-when-cross-origin
+### Optional Variables
 
-## 🚨 Troubleshooting
+```bash
+AZURE_CLIENT_ID=your-azure-client-id
+AZURE_CLIENT_SECRET=your-azure-client-secret
+AZURE_TENANT_ID=your-azure-tenant-id
+NEXT_PUBLIC_APP_NAME=Real Estate Platform
+```
+
+## Monitoring and Logging
+
+### Enable Application Logs
+
+```bash
+# Enable application logging
+az webapp log config \
+    --resource-group "Data_base" \
+    --name "real-estate-frontend" \
+    --application-logging filesystem
+
+# View logs
+az webapp log tail \
+    --resource-group "Data_base" \
+    --name "real-estate-frontend"
+```
+
+### Health Checks
+
+The application includes health check endpoints:
+- `GET /` - Main application health
+- `GET /api/health` - API health check
+
+## Troubleshooting
 
 ### Common Issues
 
-#### 1. Build Failures
-```bash
-# Check build logs
-az webapp log download --resource-group real-estate-platform-rg --name real-estate-frontend
+1. **Build Failures**
+   - Check Node.js version compatibility
+   - Verify all dependencies are installed
+   - Check for TypeScript compilation errors
 
-# Verify Node.js version
-az webapp config appsettings list --resource-group real-estate-platform-rg --name real-estate-frontend
+2. **Deployment Failures**
+   - Verify Azure CLI is logged in
+   - Check resource group and app service names
+   - Ensure proper permissions
+
+3. **Runtime Errors**
+   - Check application logs
+   - Verify environment variables
+   - Test locally with production build
+
+### Debug Commands
+
+```bash
+# Check app service status
+az webapp show --resource-group "Data_base" --name "real-estate-frontend"
+
+# View recent deployments
+az webapp deployment list --resource-group "Data_base" --name "real-estate-frontend"
+
+# SSH into app service (for debugging)
+az webapp ssh --resource-group "Data_base" --name "real-estate-frontend"
 ```
 
-#### 2. Runtime Errors
-```bash
-# Check application logs
-az webapp log tail --resource-group real-estate-platform-rg --name real-estate-frontend
+## Security Best Practices
 
-# Restart application
-az webapp restart --resource-group real-estate-platform-rg --name real-estate-frontend
-```
+1. **Environment Variables**: Never commit sensitive data to source control
+2. **HTTPS**: Always use HTTPS in production
+3. **Security Headers**: Configured in next.config.js
+4. **Non-root User**: Dockerfile runs as non-root user
+5. **Dependency Scanning**: Regularly update dependencies
 
-#### 3. API Connection Issues
-- Verify `NEXT_PUBLIC_API_URL` environment variable
-- Check backend service availability
-- Ensure CORS is properly configured
+## Performance Optimization
 
-#### 4. Static Asset Issues
-- Verify `public` folder is included in deployment
-- Check image optimization settings in `next.config.ts`
-- Ensure Azure Blob Storage domain is whitelisted
+1. **Image Optimization**: Configured in next.config.js
+2. **Bundle Analysis**: Use `npm run analyze` for bundle analysis
+3. **CDN**: Consider Azure CDN for static assets
+4. **Caching**: Configure appropriate cache headers
 
-### Performance Optimization
+## Next Steps
 
-#### 1. Enable Compression
-```bash
-az webapp config set \
-  --resource-group real-estate-platform-rg \
-  --name real-estate-frontend \
-  --generic-configurations '{"http20Enabled": true}'
-```
+1. Set up custom domain and SSL certificate
+2. Configure Azure CDN for better performance
+3. Set up monitoring with Azure Application Insights
+4. Configure backup and disaster recovery
+5. Set up staging environment for testing
 
-#### 2. Configure Caching
-```bash
-az webapp config appsettings set \
-  --resource-group real-estate-platform-rg \
-  --name real-estate-frontend \
-  --settings \
-    WEBSITE_DYNAMIC_CACHE="1"
-```
+## Support
 
-## 📈 Scaling
+For issues or questions:
+1. Check the troubleshooting section above
+2. Review Azure App Service logs
+3. Consult Azure documentation
+4. Contact the development team
 
-### Vertical Scaling (Upgrade Plan)
-```bash
-az appservice plan update \
-  --name real-estate-frontend-plan \
-  --resource-group real-estate-platform-rg \
-  --sku S1
-```
+---
 
-### Horizontal Scaling (Add Instances)
-```bash
-az appservice plan update \
-  --name real-estate-frontend-plan \
-  --resource-group real-estate-platform-rg \
-  --number-of-workers 3
-```
-
-## 🔄 Deployment Strategies
-
-### Blue-Green Deployment
-1. Deploy to staging environment
-2. Run tests and validation
-3. Swap staging and production slots
-
-### Rolling Deployment
-1. Deploy to multiple instances gradually
-2. Monitor health checks
-3. Rollback if issues detected
-
-## 💰 Cost Optimization
-
-1. **Use Basic (B1) plan** for development
-2. **Scale down** during off-hours
-3. **Use Azure Reserved Instances** for production
-4. **Monitor usage** with Azure Cost Management
-5. **Clean up unused resources**
-
-## 📚 Additional Resources
-
-- [Azure App Service Documentation](https://docs.microsoft.com/en-us/azure/app-service/)
-- [Next.js Deployment](https://nextjs.org/docs/deployment)
-- [Azure CLI Documentation](https://docs.microsoft.com/en-us/cli/azure/)
-- [Azure DevOps Pipelines](https://docs.microsoft.com/en-us/azure/devops/pipelines/)
-
-## 🆘 Support
-
-For deployment issues:
-1. Check Azure App Service logs
-2. Review application logs
-3. Verify environment variables
-4. Test locally with production settings
-5. Create support ticket in Azure portal 
+**Note**: This deployment setup follows the same patterns as the backend deployment for consistency and maintainability. 

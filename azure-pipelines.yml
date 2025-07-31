@@ -1,59 +1,42 @@
-# Azure DevOps Pipeline for Frontend Deployment
-# This pipeline automatically builds and deploys the Next.js frontend to Azure App Service
-
 trigger:
-  branches:
-    include:
-    - main
-    - develop
-  paths:
-    include:
-    - frontend/*
+- main
 
 pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  # Azure Configuration
-  resourceGroupName: 'real-estate-platform-rg'
-  webAppName: 'real-estate-frontend'
-  planName: 'real-estate-frontend-plan'
+  nodeVersion: '18.x'
+  resourceGroupName: 'Data_base'
+  appServiceName: 'real-estate-frontend'
   location: 'East US'
-  
-  # Build Configuration
-  nodeVersion: '18.17.0'
-  npmVersion: '9.6.7'
 
 stages:
 - stage: Build
-  displayName: 'Build Frontend'
+  displayName: 'Build and Test'
   jobs:
   - job: Build
-    displayName: 'Build Next.js Application'
+    displayName: 'Build Job'
     steps:
     - task: NodeTool@0
-      displayName: 'Use Node.js $(nodeVersion)'
       inputs:
-        versionSpec: '$(nodeVersion)'
-        checkLatest: true
+        versionSpec: $(nodeVersion)
+      displayName: 'Install Node.js'
 
-    - task: Npm@1
-      displayName: 'npm install'
-      inputs:
-        command: 'install'
-        workingDir: 'frontend'
+    - script: |
+        npm ci
+      displayName: 'Install dependencies'
 
-    - task: Npm@1
-      displayName: 'npm run build'
-      inputs:
-        command: 'custom'
-        customCommand: 'run build'
-        workingDir: 'frontend'
+    - script: |
+        npm run build
+      displayName: 'Build application'
+
+    - script: |
+        npm run lint
+      displayName: 'Run linting'
 
     - task: ArchiveFiles@2
-      displayName: 'Archive build artifacts'
       inputs:
-        rootFolderOrFile: 'frontend'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
         includeRootFolder: false
         archiveType: 'zip'
         archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
@@ -64,146 +47,52 @@ stages:
           **/*.log
           **/coverage/**
           **/.env*
+          **/test/**
+          **/*.test.*
+          **/*.spec.*
+          **/src/**
           **/.next/**
-          **/deployment.zip
+        displayName: 'Create deployment package'
 
     - task: PublishBuildArtifacts@1
-      displayName: 'Publish build artifacts'
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
+      displayName: 'Publish artifacts'
 
 - stage: Deploy
   displayName: 'Deploy to Azure'
   dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  condition: succeeded()
   jobs:
   - deployment: Deploy
     displayName: 'Deploy to Azure App Service'
-    environment: 'production'
+    environment: production
     strategy:
       runOnce:
         deploy:
           steps:
           - task: AzureWebApp@1
-            displayName: 'Deploy to Azure App Service'
             inputs:
-              azureSubscription: 'Azure Subscription'
-              appName: '$(webAppName)'
+              azureSubscription: 'Your-Azure-Subscription'
+              appName: $(appServiceName)
+              resourceGroupName: $(resourceGroupName)
               package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              appType: 'webApp'
-              resourceGroupName: '$(resourceGroupName)'
-              deploymentMethod: 'auto'
-
-          - task: AzureCLI@2
-            displayName: 'Configure environment variables'
-            inputs:
-              azureSubscription: 'Azure Subscription'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                # Configure environment variables
-                az webapp config appsettings set \
-                  --resource-group $(resourceGroupName) \
-                  --name $(webAppName) \
-                  --settings \
-                    NODE_ENV="production" \
-                    NEXT_TELEMETRY_DISABLED="1" \
-                    WEBSITE_NODE_DEFAULT_VERSION="$(nodeVersion)" \
-                    WEBSITE_RUN_FROM_PACKAGE="1" \
-                  --output none
-                
-                # Get backend URL and set API URL
-                BACKEND_URL=$(az webapp show \
-                  --resource-group $(resourceGroupName) \
-                  --name "real-estate-backend" \
-                  --query "defaultHostName" \
-                  --output tsv 2>/dev/null || echo "real-estate-backend.azurewebsites.net")
-                
-                az webapp config appsettings set \
-                  --resource-group $(resourceGroupName) \
-                  --name $(webAppName) \
-                  --settings \
-                    NEXT_PUBLIC_API_URL="https://$BACKEND_URL/api" \
-                  --output none
-
-          - task: AzureCLI@2
-            displayName: 'Health check'
-            inputs:
-              azureSubscription: 'Azure Subscription'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                # Wait for deployment to complete
-                sleep 30
-                
-                # Get app URL
-                APP_URL=$(az webapp show \
-                  --resource-group $(resourceGroupName) \
-                  --name $(webAppName) \
-                  --query "defaultHostName" \
-                  --output tsv)
-                
-                # Perform health check
-                if curl -f "https://$APP_URL" > /dev/null 2>&1; then
-                  echo "✅ Health check passed!"
-                else
-                  echo "⚠️  Health check failed. The app might still be starting up."
-                  exit 1
-                fi
-
-# Staging deployment for develop branch
-- stage: DeployStaging
-  displayName: 'Deploy to Staging'
-  dependsOn: Build
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
-  jobs:
-  - deployment: DeployStaging
-    displayName: 'Deploy to Staging Environment'
-    environment: 'staging'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureWebApp@1
-            displayName: 'Deploy to Staging App Service'
-            inputs:
-              azureSubscription: 'Azure Subscription'
-              appName: '$(webAppName)-staging'
-              package: '$(Pipeline.Workspace)/drop/$(Build.BuildId).zip'
-              appType: 'webApp'
-              resourceGroupName: '$(resourceGroupName)'
-              deploymentMethod: 'auto'
-
-          - task: AzureCLI@2
-            displayName: 'Configure staging environment variables'
-            inputs:
-              azureSubscription: 'Azure Subscription'
-              scriptType: 'bash'
-              scriptLocation: 'inlineScript'
-              inlineScript: |
-                # Configure environment variables for staging
-                az webapp config appsettings set \
-                  --resource-group $(resourceGroupName) \
-                  --name $(webAppName)-staging \
-                  --settings \
-                    NODE_ENV="staging" \
-                    NEXT_TELEMETRY_DISABLED="1" \
-                    WEBSITE_NODE_DEFAULT_VERSION="$(nodeVersion)" \
-                    WEBSITE_RUN_FROM_PACKAGE="1" \
-                  --output none
-                
-                # Get backend URL and set API URL for staging
-                BACKEND_URL=$(az webapp show \
-                  --resource-group $(resourceGroupName) \
-                  --name "real-estate-backend-staging" \
-                  --query "defaultHostName" \
-                  --output tsv 2>/dev/null || echo "real-estate-backend.azurewebsites.net")
-                
-                az webapp config appsettings set \
-                  --resource-group $(resourceGroupName) \
-                  --name $(webAppName)-staging \
-                  --settings \
-                    NEXT_PUBLIC_API_URL="https://$BACKEND_URL/api" \
-                  --output none 
+              appType: 'webAppLinux'
+              runtimeStack: 'NODE|18-lts'
+              startUpCommand: 'chmod +x startup.sh && ./startup.sh'
+              
+          - script: |
+              az webapp config set \
+                --resource-group $(resourceGroupName) \
+                --name $(appServiceName) \
+                --always-on true
+            displayName: 'Configure Always On'
+            
+          - script: |
+              az webapp config set \
+                --resource-group $(resourceGroupName) \
+                --name $(appServiceName) \
+                --generic-configurations '{"idleTimeoutInMinutes": 0}'
+            displayName: 'Configure Idle Timeout' 

@@ -1,159 +1,122 @@
-# Azure Frontend Deployment Script for Windows
-# This script deploys the Next.js frontend to Azure App Service
+# Azure App Service Deployment Script (PowerShell)
+# This script deploys the frontend to Azure App Service
 
 param(
-    [string]$ResourceGroup = "real-estate-platform-rg",
-    [string]$AppName = "real-estate-frontend",
-    [string]$PlanName = "real-estate-frontend-plan",
+    [string]$ResourceGroup = "Data_base",
+    [string]$AppServiceName = "real-estate-frontend",
     [string]$Location = "East US",
+    [string]$Sku = "B1",
     [string]$Runtime = "NODE|18-lts"
 )
 
-# Error handling
-$ErrorActionPreference = "Stop"
-
 # Colors for output
-function Write-ColorOutput($ForegroundColor) {
-    $fc = $host.UI.RawUI.ForegroundColor
-    $host.UI.RawUI.ForegroundColor = $ForegroundColor
-    if ($args) {
-        Write-Output $args
-    }
-    $host.UI.RawUI.ForegroundColor = $fc
-}
+$Red = "Red"
+$Green = "Green"
+$Yellow = "Yellow"
 
-Write-ColorOutput Green "🚀 Starting Azure Frontend Deployment..."
+Write-Host "🚀 Starting Azure App Service Deployment" -ForegroundColor $Green
 
 # Check if Azure CLI is installed
 try {
     $null = Get-Command az -ErrorAction Stop
 } catch {
-    Write-ColorOutput Red "❌ Azure CLI is not installed. Please install it first."
+    Write-Host "❌ Azure CLI is not installed. Please install it first." -ForegroundColor $Red
     exit 1
 }
 
-# Check if logged in to Azure
+# Check if user is logged in
 try {
     $null = az account show 2>$null
 } catch {
-    Write-ColorOutput Yellow "⚠️  Not logged in to Azure. Please run 'az login' first."
-    exit 1
+    Write-Host "⚠️  Please log in to Azure first:" -ForegroundColor $Yellow
+    az login
 }
 
-Write-ColorOutput Green "✅ Azure CLI is ready"
+Write-Host "✅ Azure CLI is ready" -ForegroundColor $Green
 
 # Create resource group if it doesn't exist
-Write-ColorOutput Yellow "📦 Creating resource group..."
+Write-Host "📦 Creating resource group..." -ForegroundColor $Yellow
 az group create --name $ResourceGroup --location $Location --output none
 
-# Create App Service Plan if it doesn't exist
-Write-ColorOutput Yellow "📋 Creating App Service Plan..."
+# Create App Service plan if it doesn't exist
+Write-Host "📋 Creating App Service plan..." -ForegroundColor $Yellow
 az appservice plan create `
-    --name $PlanName `
+    --name "${AppServiceName}-plan" `
     --resource-group $ResourceGroup `
-    --sku B1 `
+    --sku $Sku `
     --is-linux `
     --output none
 
 # Create App Service if it doesn't exist
-Write-ColorOutput Yellow "🌐 Creating App Service..."
+Write-Host "🌐 Creating App Service..." -ForegroundColor $Yellow
 az webapp create `
-    --name $AppName `
+    --name $AppServiceName `
     --resource-group $ResourceGroup `
-    --plan $PlanName `
+    --plan "${AppServiceName}-plan" `
     --runtime $Runtime `
     --deployment-local-git `
     --output none
 
 # Configure environment variables
-Write-ColorOutput Yellow "⚙️  Configuring environment variables..."
-az webapp config appsettings set `
+Write-Host "⚙️  Configuring environment variables..." -ForegroundColor $Yellow
+
+# Set Node.js version
+az webapp config set `
     --resource-group $ResourceGroup `
-    --name $AppName `
-    --settings `
-        NODE_ENV="production" `
-        NEXT_TELEMETRY_DISABLED="1" `
-        WEBSITE_NODE_DEFAULT_VERSION="18.17.0" `
-        WEBSITE_RUN_FROM_PACKAGE="1" `
+    --name $AppServiceName `
+    --linux-fx-version "NODE|18-lts" `
     --output none
 
-# Get backend URL for API configuration
-try {
-    $BackendUrl = az webapp show `
-        --resource-group $ResourceGroup `
-        --name "real-estate-backend" `
-        --query "defaultHostName" `
-        --output tsv 2>$null
-} catch {
-    $BackendUrl = "real-estate-backend.azurewebsites.net"
-}
-
-# Set API URL
-az webapp config appsettings set `
+# Set startup command
+az webapp config set `
     --resource-group $ResourceGroup `
-    --name $AppName `
-    --settings `
-        NEXT_PUBLIC_API_URL="https://$BackendUrl/api" `
+    --name $AppServiceName `
+    --startup-file "npm start" `
     --output none
 
-Write-ColorOutput Green "✅ Environment variables configured"
+# Enable logging
+az webapp log config `
+    --resource-group $ResourceGroup `
+    --name $AppServiceName `
+    --web-server-logging filesystem `
+    --output none
 
-# Install dependencies
-Write-ColorOutput Yellow "📦 Installing dependencies..."
-npm ci --only=production
+Write-Host "✅ App Service configuration complete" -ForegroundColor $Green
+
+# Build and deploy
+Write-Host "🔨 Building application..." -ForegroundColor $Yellow
 
 # Build the application
-Write-ColorOutput Yellow "🔨 Building the application..."
 npm run build
 
 # Create deployment package
-Write-ColorOutput Yellow "📦 Creating deployment package..."
-if (Test-Path "deployment.zip") {
-    Remove-Item "deployment.zip" -Force
-}
-
-# Create zip file excluding unnecessary files
-$compress = @{
-    Path = Get-ChildItem -Path . -Exclude @("node_modules", ".git", "*.log", "coverage", ".env*", ".next", "deployment.zip")
-    CompressionLevel = "Optimal"
-    DestinationPath = "deployment.zip"
-}
-Compress-Archive @compress
+Write-Host "📦 Creating deployment package..." -ForegroundColor $Yellow
+Compress-Archive -Path * -DestinationPath deployment.zip -Force -Exclude @("node_modules/*", ".git/*", "*.log", "coverage/*", ".env*", "src/*", ".next/*")
 
 # Deploy to Azure
-Write-ColorOutput Yellow "🚀 Deploying to Azure..."
+Write-Host "🚀 Deploying to Azure App Service..." -ForegroundColor $Yellow
 az webapp deployment source config-zip `
     --resource-group $ResourceGroup `
-    --name $AppName `
+    --name $AppServiceName `
     --src deployment.zip `
     --output none
 
-# Clean up
-Remove-Item "deployment.zip" -Force
+# Clean up deployment package
+Remove-Item deployment.zip -Force
 
 # Get the app URL
-$AppUrl = az webapp show `
-    --resource-group $ResourceGroup `
-    --name $AppName `
-    --query "defaultHostName" `
-    --output tsv
+$AppUrl = az webapp show --resource-group $ResourceGroup --name $AppServiceName --query defaultHostName --output tsv
 
-Write-ColorOutput Green "✅ Deployment completed successfully!"
-Write-ColorOutput Green "🌐 Your app is available at: https://$AppUrl"
+Write-Host "✅ Deployment successful!" -ForegroundColor $Green
+Write-Host "🌐 Your app is available at: https://$AppUrl" -ForegroundColor $Green
+Write-Host "🔗 Health check: https://$AppUrl" -ForegroundColor $Green
 
-$SubscriptionId = az account show --query id -o tsv
-Write-ColorOutput Yellow "📊 Monitor your app at: https://portal.azure.com/#@/resource/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroup/providers/Microsoft.Web/sites/$AppName"
+# Display next steps
+Write-Host "📋 Next steps:" -ForegroundColor $Yellow
+Write-Host "1. Configure environment variables in Azure App Service"
+Write-Host "2. Set up custom domain if needed"
+Write-Host "3. Configure Azure CDN for better performance"
+Write-Host "4. Set up monitoring and logging"
+Write-Host "5. Configure SSL certificates"
 
-# Health check
-Write-ColorOutput Yellow "🔍 Performing health check..."
-Start-Sleep -Seconds 10
-try {
-    $response = Invoke-WebRequest -Uri "https://$AppUrl" -UseBasicParsing -TimeoutSec 30
-    if ($response.StatusCode -eq 200) {
-        Write-ColorOutput Green "✅ Health check passed!"
-    } else {
-        Write-ColorOutput Yellow "⚠️  Health check failed. The app might still be starting up."
-    }
-} catch {
-    Write-ColorOutput Yellow "⚠️  Health check failed. The app might still be starting up."
-} 
+Write-Host "🎉 Deployment script completed!" -ForegroundColor $Green 
