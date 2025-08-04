@@ -58,15 +58,16 @@ export default async function Home() {
 
           {/* Call-to-action Button */}
           <Link href="post-property">
-            <button className="flex items-center bg-[#d0ff38] py-6 px-14 m-10 mt-18 rounded-full">
-              <div className="text-base text-black font-bold pr-4 leading-normal md:text-xl">
+            <button className="ml-10 flex items-center bg-[#d0ff38] py-3 px-6 md:py-6 md:px-14 m-4 md:m-10 mt-8 md:mt-18 rounded-full">
+              <div className="text-sm text-black font-bold pr-2 md:pr-4 leading-normal md:text-xl">
                 List property for free
               </div>
               <Image
                 src="/add_icon.svg"
                 alt="Add Icon"
-                width={30}
-                height={30}
+                width={20}
+                height={20}
+                className="md:w-[30px] md:h-[30px]"
               />
             </button>
           </Link>

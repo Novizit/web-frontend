@@ -60,26 +60,10 @@ const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
           Showing similar BHK type from other locations.
         </div>
       )}
-      <Swiper
-        modules={[Navigation, A11y]}
-        spaceBetween={16}
-        slidesPerView={1}
-        navigation={{
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
-          disabledClass: 'opacity-30 pointer-events-none',
-        }}
-        breakpoints={{
-          640: { slidesPerView: 1 },
-          768: { slidesPerView: 2 },
-          1024: { slidesPerView: 3 },
-          1280: { slidesPerView: 4 },
-        }}
-        a11y={{ enabled: true }}
-        className="relative"
-      >
+      {/* Mobile: Column layout without navigation */}
+      <div className="md:hidden space-y-4">
         {similarProperties.map((property) => (
-          <SwiperSlide key={property.id}>
+          <div key={property.id} className="w-full">
             <PropertyCard
               slides={property.slides}
               propertyId={property.id}
@@ -94,12 +78,52 @@ const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
               formattedFurnishing={property.formattedFurnishing}
               updatedAt={property.updatedAt}
             />
-          </SwiperSlide>
+          </div>
         ))}
-        {/* Navigation arrows for desktop/tablet only */}
-        <div className="swiper-button-prev hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer" tabIndex={0} aria-label="Previous slide" />
-        <div className="swiper-button-next hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer" tabIndex={0} aria-label="Next slide" />
-      </Swiper>
+      </div>
+
+      {/* Desktop/Tablet: Swiper with navigation */}
+      <div className="hidden md:block">
+        <Swiper
+          modules={[Navigation, A11y]}
+          spaceBetween={16}
+          slidesPerView={2}
+          navigation={{
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+            disabledClass: 'opacity-30 pointer-events-none',
+          }}
+          breakpoints={{
+            768: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
+            1280: { slidesPerView: 4 },
+          }}
+          a11y={{ enabled: true }}
+          className="relative"
+        >
+          {similarProperties.map((property) => (
+            <SwiperSlide key={property.id}>
+              <PropertyCard
+                slides={property.slides}
+                propertyId={property.id}
+                title={property.propertyName}
+                location={property.location}
+                price={property.rent}
+                furnishedInfo={property.furnishing}
+                availableFrom={property.availableFrom}
+                propertyType={property.propertyType}
+                bhkType={property.bhkType}
+                formattedBhkType={property.formattedBhkType}
+                formattedFurnishing={property.formattedFurnishing}
+                updatedAt={property.updatedAt}
+              />
+            </SwiperSlide>
+          ))}
+          {/* Navigation arrows for desktop/tablet only */}
+          <div className="swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer" tabIndex={0} aria-label="Previous slide" />
+          <div className="swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer" tabIndex={0} aria-label="Next slide" />
+        </Swiper>
+      </div>
     </div>
   );
 };

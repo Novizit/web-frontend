@@ -203,13 +203,13 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
 
 
   return (
-    <div className="bg-[#F7F7EF] py-10 mt-32 mx-10 rounded-xl">
-      <div className="text-center text-[#5f5f5f] text-5xl font-bold leading-[76px] tracking-widest mb-6">
+    <div className="bg-[#F7F7EF] py-10 mt-32 mx-4 md:mx-10 rounded-xl">
+      <div className="text-center text-[#5f5f5f] text-2xl md:text-5xl font-bold leading-tight md:leading-[76px] tracking-widest mb-6 px-4">
         Find property
       </div>
 
       {/* Search Form */}
-      <div className="md:flex items-center">
+      <div className="flex flex-col md:flex-row md:items-center">
         <form className="mx-4 md:w-1/5 md:ml-10" onSubmit={handleSearchSubmit}>
           <label className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">
             Search
@@ -271,9 +271,9 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
         </form>
 
         {/* Popular Locations */}
-        <div className="flex items-center">
+        <div className="flex flex-col md:flex-row md:items-center md:ml-6 mt-4 md:mt-0">
           <h3 className='text-[#5f5f5f] ml-4 mt-6 font-bold md:mt-1'>Popular Locations</h3>
-          <div className="flex flex-wrap mx-2 md:ml-10">
+          <div className="flex flex-wrap mx-2 md:ml-10 mt-2 md:mt-0">
             {locationList.map((location, index) => (
               <button
                 key={index}
@@ -310,9 +310,9 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
       </div>
 
       {/* Filter by BHK */}
-      <div className='md:flex md:items-center md:ml-6'>
+      <div className='flex flex-col md:flex-row md:items-center md:ml-6'>
         <h3 className='text-[#5f5f5f] ml-4 mt-6 font-bold md:mt-1'>Filter by</h3>
-        <div className="flex flex-wrap mx-2 md:ml-10">
+        <div className="flex flex-wrap mx-2 md:ml-10 mt-2 md:mt-0">
           {bhkTypes.map((bhk, index) => (
             <button
               key={index}

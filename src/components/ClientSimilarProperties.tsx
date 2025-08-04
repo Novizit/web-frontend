@@ -56,7 +56,7 @@ export default function ClientSimilarProperties({
   if (loading) {
     return (
       <div className="p-4">
-        <h3 className="text-[#24272c] text-xl font-medium mb-10">Similar properties</h3>
+        <h3 className="text-[#24272c] text-xl font-medium my-10">Similar properties</h3>
         <div className="flex justify-center py-8">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#D2F26B]"></div>
           <span className="ml-2 text-gray-600">Loading similar properties...</span>
@@ -68,7 +68,7 @@ export default function ClientSimilarProperties({
   if (error) {
     return (
       <div className="p-4">
-        <h3 className="text-[#24272c] text-xl font-medium mb-10">Similar properties</h3>
+        <h3 className="text-[#24272c] text-xl font-medium my-10">Similar properties</h3>
         <div className="text-center py-8">
           <p className="text-red-500 mb-2">{error}</p>
           <button 
@@ -85,7 +85,7 @@ export default function ClientSimilarProperties({
   if (similarProperties.length === 0) {
     return (
       <div className="p-4">
-        <h3 className="text-[#24272c] text-xl font-medium mb-10">Similar properties</h3>
+        <h3 className="text-[#24272c] text-xl font-medium my-10">Similar properties</h3>
         <div className="text-center py-8">
           <p className="text-gray-500">No similar properties found.</p>
         </div>
@@ -106,7 +106,7 @@ export default function ClientSimilarProperties({
 
   return (
     <div className="p-4">
-      <h3 className="text-[#24272c] text-xl font-medium mb-10">
+      <h3 className="text-[#24272c] text-xl font-medium my-10">
         Similar properties
         {isFallback && (
           <span className="text-sm text-gray-500 ml-2">(showing general recommendations)</span>
