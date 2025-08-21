@@ -26,13 +26,13 @@ interface Property {
 
 export default function PropertyDetails({ property }: { property: Property }) {
 
-  // Prefer Azure imageUrls, then slides, then fallback
+  // Use actual images from imageUrls or slides
   const images: string[] =
     Array.isArray(property.imageUrls) && property.imageUrls.length > 0
       ? property.imageUrls
       : Array.isArray(property.slides) && property.slides.length > 0
       ? property.slides
-      : ["/property_Img.svg"];
+      : [];
 
   return (
     <div className="mt-10">

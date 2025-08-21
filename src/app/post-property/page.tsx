@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { createProperty } from '../../services/propertyService';
 
@@ -38,6 +38,12 @@ const PostProperty = () => {
     const [imageFiles, setImageFiles] = useState<File[]>([]); // File[]
     const [imagePreviews, setImagePreviews] = useState<string[]>([]); // string[]
     const [uploading, setUploading] = useState(false);
+    const imageFilesRef = useRef<File[]>([]);
+
+    // Track image files changes for validation
+    useEffect(() => {
+        imageFilesRef.current = imageFiles;
+    }, [imageFiles]);
 
     // Add index signatures to allow string indexing
     const propertyTypeLabels: { [key: string]: string } = { INDIVIDUAL: 'Individual', APARTMENT: 'Apartment', VILLA: 'Villa' };
@@ -106,8 +112,10 @@ const PostProperty = () => {
     // Image input handler
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
+        
         // Add new files to existing ones instead of replacing
         setImageFiles(prevFiles => [...prevFiles, ...files]);
+        
         // Add new previews to existing ones
         const newPreviews = files.map(file => URL.createObjectURL(file));
         setImagePreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
@@ -134,6 +142,7 @@ const PostProperty = () => {
             propertyRent: formData.propertyRent,
             securityDeposit: formData.securityDeposit,
             propertyLocation: formData.propertyLocation,
+            availableFrom: formData.availableFrom,
             propertyType: formData.propertyType,
             bhkType: formData.bhkType,
             furnishedInfo: formData.furnishedInfo,
@@ -142,6 +151,16 @@ const PostProperty = () => {
             ownerName: formData.ownerName,
             contactNumber: formData.contactNumber,
         };
+
+        // Validate minimum 2 images
+        const currentImageCount = imageFilesRef.current.length;
+        if (currentImageCount < 2) {
+            setErrorMessage(`Please upload at least 2 property images. Currently uploaded: ${currentImageCount}`);
+            setTimeout(() => {
+                setErrorMessage('');
+            }, 5000);
+            return;
+        }
 
         const missingFields = Object.entries(requiredFields)
             .filter(([, value]) => !value || value.trim() === '')
@@ -197,7 +216,7 @@ const PostProperty = () => {
             imageUrls, // <-- Azure Blob URLs
         };
 
-        console.log('Sending property data:', property);
+
 
         try {
             setErrorMessage(''); // Clear any previous errors
@@ -248,7 +267,7 @@ const PostProperty = () => {
 
                     {/* Image Upload */}
                     <div className="mb-6">
-                        <label className="block mb-2 font-medium">Property Images</label>
+                        <label className="block mb-2 font-medium">Property Images * (Minimum 2 required)</label>
                         <input
                             type="file"
                             accept="image/*"
@@ -256,6 +275,15 @@ const PostProperty = () => {
                             onChange={handleImageChange}
                             className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none py-8 px-4"
                         />
+                        <p className="text-sm text-gray-600 mt-1">
+                          Please upload at least 2 images of your property
+                          {imageFiles.length > 0 && (
+                            <span className={`ml-2 font-medium ${imageFiles.length >= 2 ? 'text-green-600' : 'text-red-600'}`}>
+                              ({imageFiles.length} image{imageFiles.length !== 1 ? 's' : ''} selected)
+                              {imageFiles.length >= 2 && ' ✓'}
+                            </span>
+                          )}
+                        </p>
                         <div className="flex flex-wrap gap-4 mt-4">
                             {imagePreviews.map((src, idx) => (
                                 <div key={idx} className="relative">
@@ -362,7 +390,7 @@ const PostProperty = () => {
                     </div>
 
                     <div className="mb-4">
-                        <label className="block mb-2 text-sm font-medium">Available From</label>
+                        <label className="block mb-2 text-sm font-medium">Available From *</label>
                         <div className='flex'>
                             <div className="flex items-center font-normal">
                                 <button

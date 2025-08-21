@@ -121,23 +121,25 @@ export default function ClientPropertyList({
               )}
             </div>
           ) : (
-            properties.map((property) => (
-              <PropertyCard
-                key={property.id}
-                slides={property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : ["/property_Img.svg"]}
-                propertyId={property.id}
-                title={property.propertyName}
-                location={property.location}
-                price={property.rent}
-                furnishedInfo={property.furnishing}
-                availableFrom={property.availableFrom}
-                propertyType={property.propertyType}
-                bhkType={property.bhkType}
-                formattedBhkType={property.formattedBhkType}
-                formattedFurnishing={property.formattedFurnishing}
-                updatedAt={property.updatedAt}
-              />
-            ))
+            properties
+              .filter((property) => property.imageUrls && property.imageUrls.length > 0) // Only show properties with images
+              .map((property) => (
+                <PropertyCard
+                  key={property.id}
+                  slides={property.imageUrls || []}
+                  propertyId={property.id}
+                  title={property.propertyName}
+                  location={property.location}
+                  price={property.rent}
+                  furnishedInfo={property.furnishing}
+                  availableFrom={property.availableFrom}
+                  propertyType={property.propertyType}
+                  bhkType={property.bhkType}
+                  formattedBhkType={property.formattedBhkType}
+                  formattedFurnishing={property.formattedFurnishing}
+                  updatedAt={property.updatedAt}
+                />
+              ))
           )}
         </div>
       </div>

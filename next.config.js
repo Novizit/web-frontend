@@ -2,7 +2,7 @@
 const nextConfig = {
   // Optimize images
   images: {
-    domains: ['novizitstorage.blob.core.windows.net'],
+    domains: ['novizitstorage.blob.core.windows.net', 'novizitcdn.azureedge.net'],
     formats: ['image/webp', 'image/avif'],
   },
   
@@ -39,9 +39,7 @@ const nextConfig = {
   compress: true,
   
   // Ensure proper port handling
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
 };
 
 module.exports = nextConfig; 

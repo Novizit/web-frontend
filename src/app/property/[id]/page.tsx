@@ -37,7 +37,7 @@ export default async function PropertyPage({ params }: PropertyPageProps) {
   // Add slides property for PropertyDetails component
   const propertyWithSlides = {
     ...property,
-    slides: property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : ["/property_Img.svg"]
+    slides: property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : []
   };
 
       return (
@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: PropertyPageProps) {
       title: `${property.propertyName} - ${property.location}`,
       description: `${property.propertyName} for rent in ${property.location}. ${property.formattedBhkType} ${property.formattedFurnishing} property.`,
       type: 'website',
-      images: ['/property_Img.svg'], // You can add actual property images here
+      images: property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : [],
     },
   };
 } 

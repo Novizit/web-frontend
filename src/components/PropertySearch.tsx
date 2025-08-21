@@ -346,14 +346,6 @@ const PropertySearch: React.FC<PropertySearchProps> = ({
           ))}
         </div>
       </div>
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="mt-4 mx-4 md:ml-10 text-center">
-          <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#D2F26B]"></div>
-          <span className="ml-2 text-[#696C78]">Searching properties...</span>
-        </div>
-      )}
     </div>
   );
 };

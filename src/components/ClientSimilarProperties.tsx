@@ -16,6 +16,7 @@ interface Property {
   formattedBhkType: string;
   formattedFurnishing: string;
   updatedAt: string;
+  imageUrls?: string[];
 }
 
 interface ClientSimilarPropertiesProps {
@@ -93,15 +94,15 @@ export default function ClientSimilarProperties({
     );
   }
 
-  // Add slides property to properties for compatibility
+  // Add slides property to properties for compatibility with SimilarProperties
   const propertiesWithSlides = similarProperties.map(property => ({
     ...property,
-    slides: ["/property_Img.svg", "/property_Img.svg", "/property_Img.svg"]
+    slides: property.imageUrls && property.imageUrls.length > 0 ? property.imageUrls : []
   }));
 
   const currentPropertyWithSlides = {
     ...currentProperty,
-    slides: ["/property_Img.svg", "/property_Img.svg", "/property_Img.svg"]
+    slides: currentProperty.imageUrls && currentProperty.imageUrls.length > 0 ? currentProperty.imageUrls : []
   };
 
   return (

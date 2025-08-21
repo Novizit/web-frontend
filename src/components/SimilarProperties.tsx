@@ -38,14 +38,15 @@ const SimilarProperties: React.FC<SimilarPropertiesProps> = ({
 }) => {
   // Defensive: ensure allProperties is always an array
   const safeProperties = Array.isArray(allProperties) ? allProperties : [];
-  // Patch: ensure every property has a slides array
+  // Use actual images from imageUrls if available, otherwise skip properties without images
   const similarProperties = (safeProperties ?? [])
     .filter((p) => p && p.id !== currentProperty.id)
     .slice(0, maxResults)
     .map((p) => ({
       ...p,
-      slides: Array.isArray(p.slides) && p.slides.length > 0 ? p.slides : ["/property_Img.svg", "/property_Img.svg"],
-    }));
+      slides: p.imageUrls && p.imageUrls.length > 0 ? p.imageUrls : [],
+    }))
+    .filter((p) => p.slides.length > 0); // Only show properties with actual images
 
   if (!Array.isArray(similarProperties) || typeof similarProperties.length !== 'number') {
     return <div className="text-gray-500">No similar properties found.</div>;
